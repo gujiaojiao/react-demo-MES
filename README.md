@@ -1,11 +1,11 @@
 # React 后台管理系统
 
-一个基于 React 18 + TypeScript + Ant Design 的前后端分离后台管理系统。
+一个基于 React 19 + TypeScript + Ant Design 的前后端分离后台管理系统。
 
 ## 技术栈
 
 ### 前端
-- React 18
+- React 19
 - TypeScript
 - Vite
 - Ant Design
