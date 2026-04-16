@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/demo/react-demo-AI/frontend/**)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npx tsc --noEmit --project \"D:/demo/react-demo-AI/frontend/tsconfig.json\" 2>&1 || echo \"Done\")"
+    ]
+  }
+}
