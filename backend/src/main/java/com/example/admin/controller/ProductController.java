@@ -20,7 +20,8 @@ public class ProductController {
     public Result<PageResult<Product>> getProductList(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(required = false) String keyword) {
+            @RequestParam(required = false) String keyword)
+    {
         PageResult<Product> result = productService.getProductList(page, pageSize, keyword);
         return Result.success(result);
     }

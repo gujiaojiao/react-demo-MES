@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import {
   Button,
   Card,
@@ -19,64 +18,74 @@ import {
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
-  UnorderedListOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import productApi from '@/api/mes/product';
-import type { Product, ProductListParams } from '@/api/mes/product';
-import './index.css';
+import deviceApi from '@/api/mes/device';
+import type { Device, DeviceListParams } from '@/api/mes/device';
+import '../product/index.css';
 
-const ProductManage: React.FC = () => {
-  const navigate = useNavigate();
+const deviceTypeOptions = [
+  { label: '生产设备', value: 'production' },
+  { label: '检测设备', value: 'inspection' },
+  { label: '辅助设备', value: 'auxiliary' },
+];
+
+const statusOptions = [
+  { label: '启用', value: 1 },
+  { label: '停用', value: 0 },
+];
+
+const DeviceManage: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [dataSource, setDataSource] = useState<Product[]>([]);
+  const [dataSource, setDataSource] = useState<Device[]>([]);
   const [total, setTotal] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
-  });
+  const [filterType, setFilterType] = useState<string | undefined>();
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
   const [modalVisible, setModalVisible] = useState(false);
-  const [formData, setFormData] = useState<Partial<Product>>({});
+  const [formData, setFormData] = useState<Partial<Device>>({});
   const [form] = Form.useForm();
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const params: ProductListParams = {
+      const params: DeviceListParams = {
         page: pagination.current,
         pageSize: pagination.pageSize,
         keyword: searchKeyword || undefined,
+        type: filterType || undefined,
       };
-      const response = await productApi.getList(params);
+      const response = await deviceApi.getList(params);
       if (response.code === 200) {
         setDataSource(response.data?.list || []);
         setTotal(response.data?.total || 0);
       } else {
-        message.error(response.message || '获取产品列表失败');
-        setDataSource([]);
-        setTotal(0);
+        message.error(response.message || '获取设备列表失败');
       }
     } catch {
-      message.error('获取产品列表失败');
-      setDataSource([]);
-      setTotal(0);
+      message.error('获取设备列表失败');
     } finally {
       setLoading(false);
     }
-  }, [pagination.current, pagination.pageSize, searchKeyword]);
+  };
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [pagination.current, pagination.pageSize, filterType]);
+
+  const handleSearch = () => {
+    setPagination((prev) => ({ ...prev, current: 1 }));
+    fetchData();
+  };
 
   const handleAdd = () => {
     setFormData({});
     form.resetFields();
+    form.setFieldsValue({ status: 1 });
     setModalVisible(true);
   };
 
-  const handleEdit = (record: Product) => {
+  const handleEdit = (record: Device) => {
     setFormData(record);
     form.setFieldsValue(record);
     setModalVisible(true);
@@ -84,7 +93,7 @@ const ProductManage: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      const response = await productApi.delete(id);
+      const response = await deviceApi.delete(id);
       if (response.code === 200) {
         message.success('删除成功');
         fetchData();
@@ -100,7 +109,7 @@ const ProductManage: React.FC = () => {
     try {
       const values = await form.validateFields();
       if (formData.id) {
-        const response = await productApi.update(formData.id, values);
+        const response = await deviceApi.update(formData.id, values);
         if (response.code === 200) {
           message.success('更新成功');
           setModalVisible(false);
@@ -110,7 +119,7 @@ const ProductManage: React.FC = () => {
           message.error(response.message || '更新失败');
         }
       } else {
-        const response = await productApi.create(values);
+        const response = await deviceApi.create(values);
         if (response.code === 200) {
           message.success('创建成功');
           setModalVisible(false);
@@ -126,86 +135,39 @@ const ProductManage: React.FC = () => {
     }
   };
 
-  const handleTableChange = (pag: { current?: number; pageSize?: number }) => {
-    setPagination({
-      current: pag.current || 1,
-      pageSize: pag.pageSize || 10,
-    });
-  };
-
-  const handleSearch = () => {
-    setPagination((prev) => ({ ...prev, current: 1 }));
-  };
-
-  const columns: ColumnsType<Product> = [
+  const columns: ColumnsType<Device> = [
+    { title: 'ID', dataIndex: 'id', width: 80, align: 'center' },
+    { title: '设备名称', dataIndex: 'name', width: 180 },
+    { title: '设备编码', dataIndex: 'code', width: 160 },
     {
-      title: 'ID',
-      dataIndex: 'id',
-      width: 80,
-      align: 'center',
+      title: '设备类型',
+      dataIndex: 'type',
+      width: 120,
+      render: (value: string) => deviceTypeOptions.find((item) => item.value === value)?.label || value,
     },
-    {
-      title: '产品名称',
-      dataIndex: 'name',
-      width: 180,
-    },
-    {
-      title: '产品编码',
-      dataIndex: 'code',
-      width: 160,
-    },
-    {
-      title: '产品规格',
-      dataIndex: 'spec',
-      width: 180,
-    },
+    { title: '设备位置', dataIndex: 'location', width: 240 },
     {
       title: '状态',
       dataIndex: 'status',
       width: 100,
       align: 'center',
       render: (status: number) => (
-        <Tag color={status === 1 ? 'green' : 'default'}>
-          {status === 1 ? '启用' : '禁用'}
-        </Tag>
+        <Tag color={status === 1 ? 'green' : 'default'}>{status === 1 ? '启用' : '停用'}</Tag>
       ),
     },
-    {
-      title: '产品描述',
-      dataIndex: 'description',
-      ellipsis: true,
-    },
-    {
-      title: '创建时间',
-      dataIndex: 'createdAt',
-      width: 180,
-    },
+    { title: '创建时间', dataIndex: 'createdAt', width: 180 },
     {
       title: '操作',
       key: 'action',
-      width: 260,
+      width: 180,
       align: 'center',
-      fixed: 'right',
       render: (_, record) => (
         <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            icon={<UnorderedListOutlined />}
-            onClick={() => navigate(`/mes/product/${record.id}/bom`)}
-          >
-            BOM维护
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
+          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
             编辑
           </Button>
           <Popconfirm
-            title="确定删除该产品吗？"
+            title="确定删除该设备吗？"
             okText="确定"
             cancelText="取消"
             onConfirm={() => handleDelete(record.id)}
@@ -222,10 +184,10 @@ const ProductManage: React.FC = () => {
   return (
     <div className="product-manage">
       <div className="topContent">
-        <h2 className="page-title">产品管理</h2>
-        <Space size="middle">
+        <h2 className="page-title">设备管理</h2>
+        <Space size="middle" wrap>
           <Input.Search
-            placeholder="搜索产品名称或编码"
+            placeholder="搜索设备名称或编码"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onSearch={handleSearch}
@@ -233,11 +195,22 @@ const ProductManage: React.FC = () => {
             enterButton={<SearchOutlined />}
             allowClear
           />
+          <Select
+            placeholder="筛选设备类型"
+            allowClear
+            style={{ width: 160 }}
+            value={filterType}
+            options={deviceTypeOptions}
+            onChange={(value) => {
+              setFilterType(value);
+              setPagination((prev) => ({ ...prev, current: 1 }));
+            }}
+          />
           <Button icon={<ReloadOutlined />} onClick={fetchData}>
             刷新
           </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            新增产品
+            新增设备
           </Button>
         </Space>
       </div>
@@ -257,14 +230,19 @@ const ProductManage: React.FC = () => {
             pageSizeOptions: ['10', '20', '50'],
             showTotal: (value) => `共 ${value} 条记录`,
           }}
-          onChange={handleTableChange}
+          onChange={(pag) =>
+            setPagination({
+              current: pag.current || 1,
+              pageSize: pag.pageSize || 10,
+            })
+          }
           scroll={{ x: 1200 }}
           size="middle"
         />
       </Card>
 
       <Modal
-        title={formData.id ? '编辑产品' : '新增产品'}
+        title={formData.id ? '编辑设备' : '新增设备'}
         open={modalVisible}
         onOk={handleSubmit}
         onCancel={() => {
@@ -279,44 +257,37 @@ const ProductManage: React.FC = () => {
         <Form form={form} layout="vertical" initialValues={{ status: 1 }}>
           <Form.Item
             name="name"
-            label="产品名称"
-            rules={[{ required: true, message: '请输入产品名称' }]}
+            label="设备名称"
+            rules={[{ required: true, message: '请输入设备名称' }]}
           >
-            <Input placeholder="请输入产品名称" maxLength={50} />
+            <Input placeholder="请输入设备名称" maxLength={50} />
           </Form.Item>
           <Form.Item
             name="code"
-            label="产品编码"
+            label="设备编码"
             rules={[
-              { required: true, message: '请输入产品编码' },
+              { required: true, message: '请输入设备编码' },
               { pattern: /^[A-Za-z0-9_-]+$/, message: '编码只能包含字母、数字、下划线和中划线' },
             ]}
           >
-            <Input placeholder="请输入产品编码" maxLength={30} />
+            <Input placeholder="请输入设备编码" maxLength={30} />
           </Form.Item>
-          <Form.Item name="spec" label="产品规格">
-            <Input placeholder="请输入产品规格" maxLength={50} />
+          <Form.Item
+            name="type"
+            label="设备类型"
+            rules={[{ required: true, message: '请选择设备类型' }]}
+          >
+            <Select placeholder="请选择设备类型" options={deviceTypeOptions} />
+          </Form.Item>
+          <Form.Item name="location" label="设备位置">
+            <Input placeholder="请输入设备位置" maxLength={100} />
           </Form.Item>
           <Form.Item
             name="status"
             label="状态"
             rules={[{ required: true, message: '请选择状态' }]}
           >
-            <Select
-              placeholder="请选择状态"
-              options={[
-                { label: '启用', value: 1 },
-                { label: '禁用', value: 0 },
-              ]}
-            />
-          </Form.Item>
-          <Form.Item name="description" label="产品描述">
-            <Input.TextArea
-              placeholder="请输入产品描述"
-              rows={4}
-              maxLength={200}
-              showCount
-            />
+            <Select placeholder="请选择状态" options={statusOptions} />
           </Form.Item>
         </Form>
       </Modal>
@@ -324,4 +295,4 @@ const ProductManage: React.FC = () => {
   );
 };
 
-export default ProductManage;
+export default DeviceManage;

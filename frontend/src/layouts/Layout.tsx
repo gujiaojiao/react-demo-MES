@@ -1,23 +1,23 @@
 import React from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout as AntLayout, Menu, Avatar, Dropdown, Space } from 'antd';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Avatar, Dropdown, Layout as AntLayout, Menu, Space } from 'antd';
 import {
+  BookOutlined,
   DashboardOutlined,
-  UserOutlined,
-  SettingOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  ToolOutlined,
-  TeamOutlined,
-  BookOutlined,
   PartitionOutlined,
   ProductOutlined,
   ProfileOutlined,
-  ProjectOutlined,
-  ShopOutlined,
   RobotOutlined,
   ScheduleOutlined,
+  SettingOutlined,
+  ShopOutlined,
+  TeamOutlined,
+  ToolOutlined,
+  ProjectOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import useAppStore from '@/store/appStore';
@@ -37,7 +37,6 @@ const SideLayout: React.FC = () => {
       label: '控制台',
     },
     {
-      // 业务模块（MES）
       key: '/mes',
       icon: <PartitionOutlined />,
       label: '生产管理',
@@ -51,11 +50,6 @@ const SideLayout: React.FC = () => {
           key: '/mes/material',
           icon: <ProfileOutlined />,
           label: '物料管理',
-        },
-        {
-          key: '/mes/bom',
-          icon: <ToolOutlined />,
-          label: 'BOM管理',
         },
         {
           key: '/mes/process',
@@ -77,7 +71,6 @@ const SideLayout: React.FC = () => {
           icon: <ScheduleOutlined />,
           label: '生产订单管理',
         },
-
       ],
     },
     {
@@ -124,14 +117,20 @@ const SideLayout: React.FC = () => {
       label: '退出登录',
       onClick: () => {
         logout();
-        localStorage.removeItem('token');
-        navigate('/login');
+        navigate('/login', { replace: true });
       },
     },
   ];
 
   const getSelectedKeys = () => {
     const path = location.pathname;
+    if (path.startsWith('/mes/product/')) return ['/mes/production'];
+    if (path.startsWith('/mes/material')) return ['/mes/material'];
+    if (path.startsWith('/mes/process')) return ['/mes/process'];
+    if (path.startsWith('/mes/route')) return ['/mes/route'];
+    if (path.startsWith('/mes/device')) return ['/mes/device'];
+    if (path.startsWith('/mes/production-order')) return ['/mes/production-order'];
+    if (path.startsWith('/mes/production')) return ['/mes/production'];
     if (path.startsWith('/system/user')) return ['/system/user'];
     if (path.startsWith('/system/role')) return ['/system/role'];
     if (path.startsWith('/system/dict')) return ['/system/dict'];
@@ -141,7 +140,8 @@ const SideLayout: React.FC = () => {
 
   const getOpenKeys = () => {
     const path = location.pathname;
-    if (path.startsWith('/system')) return ['/system'];
+    if (path.startsWith('/mes/')) return ['/mes'];
+    if (path.startsWith('/system/')) return ['/system'];
     return [];
   };
 
@@ -154,19 +154,23 @@ const SideLayout: React.FC = () => {
         width={sidebarWidth}
         theme="dark"
       >
-        <div style={{
-          height: 64,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: themeColor,
-        }}>
-          <h1 style={{
-            color: '#fff',
-            fontSize: sidebarCollapsed ? 16 : 18,
-            margin: 0,
-            whiteSpace: 'nowrap',
-          }}>
+        <div
+          style={{
+            height: 64,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: themeColor,
+          }}
+        >
+          <h1
+            style={{
+              color: '#fff',
+              fontSize: sidebarCollapsed ? 16 : 18,
+              margin: 0,
+              whiteSpace: 'nowrap',
+            }}
+          >
             {sidebarCollapsed ? '管理系统' : '后台管理系统'}
           </h1>
         </div>
@@ -180,14 +184,16 @@ const SideLayout: React.FC = () => {
         />
       </Sider>
       <AntLayout>
-        <Header style={{
-          padding: '0 16px',
-          background: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-        }}>
+        <Header
+          style={{
+            padding: '0 16px',
+            background: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+          }}
+        >
           <Space>
             {React.createElement(sidebarCollapsed ? MenuUnfoldOutlined : MenuFoldOutlined, {
               className: 'trigger',

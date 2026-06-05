@@ -1,23 +1,21 @@
 import React from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout as AntLayout, Menu, Avatar, Dropdown, Space } from 'antd';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Avatar, Dropdown, Layout as AntLayout, Menu, Space } from 'antd';
 import {
-  DashboardOutlined,
-  UserOutlined,
-  SettingOutlined,
-  LogoutOutlined,
-  ToolOutlined,
-  TeamOutlined,
   BookOutlined,
-  QuestionOutlined,
+  DashboardOutlined,
+  LogoutOutlined,
   PartitionOutlined,
   ProductOutlined,
   ProfileOutlined,
   ProjectOutlined,
-  ShopOutlined,
   RobotOutlined,
   ScheduleOutlined,
-
+  SettingOutlined,
+  ShopOutlined,
+  TeamOutlined,
+  ToolOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import useAppStore from '@/store/appStore';
@@ -36,7 +34,6 @@ const TopLayout: React.FC = () => {
       label: '控制台',
     },
     {
-      // 业务模块（MES）
       key: '/mes',
       icon: <PartitionOutlined />,
       label: '生产管理',
@@ -50,11 +47,6 @@ const TopLayout: React.FC = () => {
           key: '/mes/material',
           icon: <ProfileOutlined />,
           label: '物料管理',
-        },
-        {
-          key: '/mes/bom',
-          icon: <ToolOutlined />,
-          label: 'BOM管理',
         },
         {
           key: '/mes/process',
@@ -76,7 +68,6 @@ const TopLayout: React.FC = () => {
           icon: <ScheduleOutlined />,
           label: '生产订单管理',
         },
-
       ],
     },
     {
@@ -123,14 +114,20 @@ const TopLayout: React.FC = () => {
       label: '退出登录',
       onClick: () => {
         logout();
-        localStorage.removeItem('token');
-        navigate('/login');
+        navigate('/login', { replace: true });
       },
     },
   ];
 
   const getSelectedKeys = () => {
     const path = location.pathname;
+    if (path.startsWith('/mes/product/')) return ['/mes/production'];
+    if (path.startsWith('/mes/material')) return ['/mes/material'];
+    if (path.startsWith('/mes/process')) return ['/mes/process'];
+    if (path.startsWith('/mes/route')) return ['/mes/route'];
+    if (path.startsWith('/mes/device')) return ['/mes/device'];
+    if (path.startsWith('/mes/production-order')) return ['/mes/production-order'];
+    if (path.startsWith('/mes/production')) return ['/mes/production'];
     if (path.startsWith('/system/user')) return ['/system/user'];
     if (path.startsWith('/system/role')) return ['/system/role'];
     if (path.startsWith('/system/dict')) return ['/system/dict'];
@@ -140,21 +137,25 @@ const TopLayout: React.FC = () => {
 
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
-      <Header style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        background: themeColor,
-        padding: '0 24px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <h1 style={{
-            color: '#fff',
-            fontSize: 20,
-            margin: 0,
-            marginRight: 40,
-            whiteSpace: 'nowrap',
-          }}>
+      <Header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: themeColor,
+          padding: '0 24px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+          <h1
+            style={{
+              color: '#fff',
+              fontSize: 20,
+              margin: 0,
+              marginRight: 40,
+              whiteSpace: 'nowrap',
+            }}
+          >
             后台管理系统
           </h1>
           <Menu
@@ -165,7 +166,7 @@ const TopLayout: React.FC = () => {
             onClick={({ key }) => navigate(key)}
             style={{
               flex: 1,
-              minWidth: 200,
+              minWidth: 240,
               background: 'transparent',
             }}
           />
@@ -178,12 +179,14 @@ const TopLayout: React.FC = () => {
         </Dropdown>
       </Header>
       <Content style={{ padding: '24px 50px' }}>
-        <div style={{
-          padding: 24,
-          background: '#fff',
-          borderRadius: 4,
-          minHeight: 280,
-        }}>
+        <div
+          style={{
+            padding: 24,
+            background: '#fff',
+            borderRadius: 4,
+            minHeight: 280,
+          }}
+        >
           <Outlet />
         </div>
       </Content>

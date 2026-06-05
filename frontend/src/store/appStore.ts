@@ -35,27 +35,33 @@ const useAppStore = create<AppState>()(
       themeColor: '#1890ff',
       layoutMode: 'side',
       sidebarWidth: 200,
-      setToken: (token) => {
-        // 同时存储到 localStorage，供 axios 拦截器使用
-        if (token) {
-          localStorage.setItem('token', token);
-        } else {
-          localStorage.removeItem('token');
-        }
-        set({ token });
-      },
+      setToken: (token) => set({ token }),
       setUserInfo: (userInfo) => set({ userInfo }),
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
-      logout: () => {
-        localStorage.removeItem('token');
-        set({ token: null, userInfo: null });
-      },
+      logout: () => set({ token: null, userInfo: null }),
       setThemeColor: (themeColor) => set({ themeColor }),
       setLayoutMode: (layoutMode) => set({ layoutMode }),
       setSidebarWidth: (sidebarWidth) => set({ sidebarWidth }),
     }),
     {
       name: 'app-storage',
+      version: 2,
+      migrate: (persistedState: any) => ({
+        token: null,
+        userInfo: null,
+        sidebarCollapsed: persistedState?.sidebarCollapsed ?? false,
+        themeColor: persistedState?.themeColor ?? '#1890ff',
+        layoutMode: persistedState?.layoutMode ?? 'side',
+        sidebarWidth: persistedState?.sidebarWidth ?? 200,
+      }),
+      partialize: (state) => ({
+        token: null,
+        userInfo: null,
+        sidebarCollapsed: state.sidebarCollapsed,
+        themeColor: state.themeColor,
+        layoutMode: state.layoutMode,
+        sidebarWidth: state.sidebarWidth,
+      }),
     }
   )
 );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Card, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { authApi } from '@/api';
@@ -10,14 +10,23 @@ interface LoginForm {
   password: string;
 }
 
+interface LoginLocationState {
+  from?: string;
+}
+
+const DEFAULT_AFTER_LOGIN = '/dashboard';
+
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setToken, setUserInfo } = useAppStore();
+  const { token, setToken, setUserInfo } = useAppStore();
   const [loading, setLoading] = useState(false);
 
-  // 获取登录前想访问的页面路径
-  const from = (location.state as any)?.from || '/dashboard';
+  const from = (location.state as LoginLocationState | null)?.from || DEFAULT_AFTER_LOGIN;
+
+  if (token) {
+    return <Navigate to={from} replace />;
+  }
 
   const onFinish = async (values: LoginForm) => {
     setLoading(true);
@@ -41,7 +50,8 @@ const Login: React.FC = () => {
       alignItems: 'center',
       justifyContent: 'center',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    }}>
+    }}
+    >
       <Card style={{ width: 400, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
         <div style={{ textAlign: 'center', marginBottom: 30 }}>
           <h1 style={{ fontSize: 24, margin: 0, color: '#333' }}>后台管理系统</h1>

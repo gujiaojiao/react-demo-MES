@@ -4,8 +4,6 @@ import { Card } from "antd";
 import dictApi from "@/api/dict";
 import type { Dict, DictTypeVO } from "@/api/dict";
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons';
-import Title from "antd/es/skeleton/Title";
-import { renderMatches } from "react-router-dom";
 
 const DictList: React.FC = () => {
     // 字典类型列表

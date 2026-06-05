@@ -2,6 +2,7 @@ package com.example.admin.controller;
 
 import com.example.admin.common.Result;
 import com.example.admin.dto.BomDTO;
+import com.example.admin.dto.BomVO;
 import com.example.admin.entity.Bom;
 import com.example.admin.service.BomService;
 import jakarta.validation.Valid;
@@ -18,8 +19,8 @@ public class BomController {
     private final BomService bomService;
 
     @GetMapping("/list")
-    public Result<List<Bom>> getBomList(@RequestParam Long productId) {
-        List<Bom> result = bomService.getBomListByProductId(productId);
+    public Result<List<BomVO>> getBomList(@RequestParam Long productId) {
+        List<BomVO> result = bomService.getBomListByProductId(productId);
         return Result.success(result);
     }
 
@@ -30,8 +31,8 @@ public class BomController {
     }
 
     @GetMapping("/by-product/{productId}")
-    public Result<List<Bom>> getBomByProductId(@PathVariable Long productId) {
-        List<Bom> result = bomService.getBomListByProductId(productId);
+    public Result<List<BomVO>> getBomByProductId(@PathVariable Long productId) {
+        List<BomVO> result = bomService.getBomListByProductId(productId);
         return Result.success(result);
     }
 

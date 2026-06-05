@@ -4,18 +4,23 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.admin.common.PageResult;
 import com.example.admin.dto.RouteDTO;
+import com.example.admin.dto.RouteVO;
+import com.example.admin.entity.MesProcess;
 import com.example.admin.entity.Route;
 import com.example.admin.entity.RouteProcess;
+import com.example.admin.mapper.ProcessMapper;
 import com.example.admin.mapper.RouteMapper;
 import com.example.admin.mapper.RouteProcessMapper;
 import com.example.admin.service.RouteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +28,7 @@ public class RouteServiceImpl implements RouteService {
 
     private final RouteMapper routeMapper;
     private final RouteProcessMapper routeProcessMapper;
+    private final ProcessMapper processMapper;
 
     @Override
     public PageResult<Route> getRouteList(int page, int pageSize, String keyword) {
@@ -53,16 +59,12 @@ public class RouteServiceImpl implements RouteService {
     }
 
     @Override
-    public Route getRouteWithProcesses(Long id) {
+    public RouteVO getRouteWithProcesses(Long id) {
         Route route = getRouteById(id);
-        // 获取路线的工序列表
-        List<RouteProcess> processes = routeProcessMapper.selectList(
-                new LambdaQueryWrapper<RouteProcess>()
-                        .eq(RouteProcess::getRouteId, id)
-                        .orderByAsc(RouteProcess::getSequence)
-        );
-        // 将工序列表存入route（需要在Route实体中添加transient字段或使用VO）
-        return route;
+        RouteVO routeVO = new RouteVO();
+        BeanUtils.copyProperties(route, routeVO);
+        routeVO.setProcesses(routeProcessMapper.selectProcessDetailsByRouteId(id));
+        return routeVO;
     }
 
     @Override
@@ -76,6 +78,8 @@ public class RouteServiceImpl implements RouteService {
             throw new RuntimeException("路线编码已存在");
         }
 
+        validateProcesses(routeDTO);
+
         Route route = new Route();
         route.setName(routeDTO.getName());
         route.setCode(routeDTO.getCode());
@@ -85,17 +89,7 @@ public class RouteServiceImpl implements RouteService {
 
         routeMapper.insert(route);
 
-        // 创建工序关联
-        if (routeDTO.getProcesses() != null && !routeDTO.getProcesses().isEmpty()) {
-            for (RouteDTO.RouteProcessItem item : routeDTO.getProcesses()) {
-                RouteProcess routeProcess = new RouteProcess();
-                routeProcess.setRouteId(route.getId());
-                routeProcess.setProcessId(item.getProcessId());
-                routeProcess.setSequence(item.getSequence());
-                routeProcess.setCreatedAt(LocalDateTime.now());
-                routeProcessMapper.insert(routeProcess);
-            }
-        }
+        saveRouteProcesses(route.getId(), routeDTO);
 
         return route;
     }
@@ -134,21 +128,13 @@ public class RouteServiceImpl implements RouteService {
 
         routeMapper.updateById(route);
 
-        // 更新工序关联：先删除旧的，再插入新的
         if (routeDTO.getProcesses() != null) {
+            validateProcesses(routeDTO);
             routeProcessMapper.delete(
                     new LambdaQueryWrapper<RouteProcess>()
                             .eq(RouteProcess::getRouteId, id)
             );
-
-            for (RouteDTO.RouteProcessItem item : routeDTO.getProcesses()) {
-                RouteProcess routeProcess = new RouteProcess();
-                routeProcess.setRouteId(id);
-                routeProcess.setProcessId(item.getProcessId());
-                routeProcess.setSequence(item.getSequence());
-                routeProcess.setCreatedAt(LocalDateTime.now());
-                routeProcessMapper.insert(routeProcess);
-            }
+            saveRouteProcesses(id, routeDTO);
         }
 
         return route;
@@ -162,12 +148,50 @@ public class RouteServiceImpl implements RouteService {
             throw new RuntimeException("工艺路线不存在");
         }
 
-        // 删除工序关联
         routeProcessMapper.delete(
                 new LambdaQueryWrapper<RouteProcess>()
                         .eq(RouteProcess::getRouteId, id)
         );
 
         routeMapper.deleteById(id);
+    }
+
+    private void validateProcesses(RouteDTO routeDTO) {
+        if (routeDTO.getProcesses() == null) {
+            return;
+        }
+
+        Set<Long> processIds = new HashSet<>();
+        for (RouteDTO.RouteProcessItem item : routeDTO.getProcesses()) {
+            if (item.getProcessId() == null) {
+                throw new RuntimeException("工序不能为空");
+            }
+            if (item.getSequence() == null || item.getSequence() <= 0) {
+                throw new RuntimeException("工序顺序必须大于0");
+            }
+            if (!processIds.add(item.getProcessId())) {
+                throw new RuntimeException("同一路线中不能重复添加工序");
+            }
+
+            MesProcess process = processMapper.selectById(item.getProcessId());
+            if (process == null) {
+                throw new RuntimeException("工序不存在");
+            }
+        }
+    }
+
+    private void saveRouteProcesses(Long routeId, RouteDTO routeDTO) {
+        if (routeDTO.getProcesses() == null || routeDTO.getProcesses().isEmpty()) {
+            return;
+        }
+
+        for (RouteDTO.RouteProcessItem item : routeDTO.getProcesses()) {
+            RouteProcess routeProcess = new RouteProcess();
+            routeProcess.setRouteId(routeId);
+            routeProcess.setProcessId(item.getProcessId());
+            routeProcess.setSequence(item.getSequence());
+            routeProcess.setCreatedAt(LocalDateTime.now());
+            routeProcessMapper.insert(routeProcess);
+        }
     }
 }

@@ -39,7 +39,7 @@ Open the project in IntelliJ IDEA or VS Code with Java extension, then run `Admi
 
 ### Using H2 Database (Default)
 The application uses H2 in-memory database by default.
-- H2 Console: http://localhost:3000/h2-console
+- H2 Console: http://localhost:4000/h2-console
 - JDBC URL: `jdbc:h2:mem:admin`
 - Username: `sa`
 - Password: (empty)

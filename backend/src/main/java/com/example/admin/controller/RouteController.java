@@ -3,6 +3,7 @@ package com.example.admin.controller;
 import com.example.admin.common.PageResult;
 import com.example.admin.common.Result;
 import com.example.admin.dto.RouteDTO;
+import com.example.admin.dto.RouteVO;
 import com.example.admin.entity.Route;
 import com.example.admin.service.RouteService;
 import jakarta.validation.Valid;
@@ -32,8 +33,8 @@ public class RouteController {
     }
 
     @GetMapping("/{id}/with-processes")
-    public Result<Route> getRouteWithProcesses(@PathVariable Long id) {
-        Route route = routeService.getRouteWithProcesses(id);
+    public Result<RouteVO> getRouteWithProcesses(@PathVariable Long id) {
+        RouteVO route = routeService.getRouteWithProcesses(id);
         return Result.success(route);
     }
 
